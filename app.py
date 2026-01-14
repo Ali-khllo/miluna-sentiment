@@ -8,7 +8,7 @@ from pathlib import Path
 
 # 🔧 ADDED — PERFORMANCE OPTIMIZATION
 torch.set_grad_enabled(False)
-torch.set_num_threads(1)
+
 
 # ---------- CONFIG ----------
 st.set_page_config(
@@ -194,7 +194,7 @@ with right_col:
         placeholder="What frequency is your heart vibrating at today? Whisper your thoughts here..."
     )
 
-    if st.button("Let Milusa Guess ❯", use_container_width=True):
+    if st.button("Let Miluna Guess ❯", use_container_width=True):
         with st.spinner("Miluna is reading your emotions... 🌑"):  # 🔧 ADDED
             if not text.strip():
                 st.warning("Data required for analysis.")
