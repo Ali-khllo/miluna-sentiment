@@ -207,6 +207,22 @@ with right_col:
                 pred = torch.argmax(probs).item()
                 conf = probs[pred].item()
                 res = sentiment_config[pred]
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                    probs = F.softmax(outputs.logits, dim=1)[0]
+
+                pred = torch.argmax(probs).item()
+                conf = probs[pred].item()
+
+                #    🔧 FIX: map binary model → 3-class UI
+                if model.config.num_labels == 2:
+                    # 0 = NEGATIVE, 1 = POSITIVE
+                    c_idx = 2 if pred == 1 else 0
+                else:
+                  c_idx = pred
+
+                res = sentiment_config[c_idx]
+
 
                 st.markdown(f"""
                     <div style="border-radius: 30px; padding: 40px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 212, 255, 0.2); border-top: 6px solid {res['color']}; margin-top: 30px;">
