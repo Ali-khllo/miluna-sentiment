@@ -6,6 +6,10 @@ import base64
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from pathlib import Path
 
+# 🔧 ADDED — PERFORMANCE OPTIMIZATION
+torch.set_grad_enabled(False)
+torch.set_num_threads(1)
+
 # ---------- CONFIG ----------
 st.set_page_config(
     page_title="Miluna AI",
@@ -18,24 +22,22 @@ UNIVERSITY_NAME = "UNIVERSITAS MERCU BUANA"
 CLASS_NAME = "DATA SCIENCE"
 LECTURER_NAME = "Lecturer: Ilham Nugraha, S.Kom, M.Sc"
 ACADEMIC_YEAR = "2025-2026"
-YOUR_NAME = "Ali Khllo" 
+YOUR_NAME = "Ali Khllo"
 AI_NAME = "Miluna"
 LOGO_PATH = "logo.png"
 
 # ---------- PERMANENT BODY LAYOUT CSS ----------
 st.markdown("""
 <style>
-    /* 1. CLEAN UP INTERFACE */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    
+
     .stApp {
         background: #05070a;
         color: #e9ecef;
     }
 
-    /* 2. LEFT COLUMN BRANDING (1 PART) */
     .branding-panel {
         background: #0b0e14;
         border: 1px solid rgba(0, 212, 255, 0.1);
@@ -80,7 +82,6 @@ st.markdown("""
         letter-spacing: 1px;
     }
 
-    /* 3. RIGHT COLUMN AI (3 PARTS) */
     .ai-card {
         background: rgba(0, 212, 255, 0.03);
         border: 1px solid rgba(0, 212, 255, 0.15);
@@ -96,7 +97,6 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* 4. INPUT & BUTTONS */
     .stTextArea textarea {
         background-color: rgba(255, 255, 255, 0.01) !important;
         color: #00d4ff !important;
@@ -114,7 +114,6 @@ st.markdown("""
         border: none !important;
     }
 
-    /* 5. FOOTER (CYAN NAME) */
     .custom-footer {
         text-align: center;
         margin-top: 60px;
@@ -148,19 +147,19 @@ def load_model():
         tokenizer = AutoTokenizer.from_pretrained("model")
         model = AutoModelForSequenceClassification.from_pretrained("model")
         model.eval()
+        model.to(torch.device("cpu"))  # 🔧 ADDED — force CPU, avoid CUDA checks
         return tokenizer, model
     except:
         st.error("Missing model folder.")
         st.stop()
 
 tokenizer, model = load_model()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+device = torch.device("cpu")
 
-# ---------- MAIN BODY LAYOUT (1:3) ----------
+# ---------- MAIN BODY LAYOUT ----------
 left_col, right_col = st.columns([1, 3], gap="large")
 
-# --- LEFT PANEL: BRANDING ---
+# --- LEFT PANEL ---
 with left_col:
     try:
         img_b64 = get_image_base64(LOGO_PATH)
@@ -177,7 +176,7 @@ with left_col:
     except:
         st.write("University Info Panel")
 
-# --- RIGHT PANEL: AI SYSTEM ---
+# --- RIGHT PANEL ---
 with right_col:
     st.markdown(f"""
         <div class="ai-card">
@@ -190,36 +189,36 @@ with right_col:
     """, unsafe_allow_html=True)
 
     text = st.text_area(
-        "What's on your mind? ✨", 
-        height=220, 
-        placeholder=f"What frequency is your heart vibrating at today? Whisper your thoughts here..."
+        "What's on your mind? ✨",
+        height=220,
+        placeholder="What frequency is your heart vibrating at today? Whisper your thoughts here..."
     )
 
-    if st.button(f"Let Milusa Guess ❯", use_container_width=True):
-        if not text.strip():
-            st.warning("Data required for analysis.")
-        else:
-            inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
-            with torch.no_grad():
-                outputs = model(**inputs)
-                probs = F.softmax(outputs.logits, dim=1)[0]
+    if st.button("Let Milusa Guess ❯", use_container_width=True):
+        with st.spinner("Miluna is reading your emotions... 🌑"):  # 🔧 ADDED
+            if not text.strip():
+                st.warning("Data required for analysis.")
+            else:
+                inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                    probs = F.softmax(outputs.logits, dim=1)[0]
 
-            pred = torch.argmax(probs).item()
-            conf = probs[pred].item()
-            c_idx = 2 if (model.config.num_labels == 2 and pred == 1) else pred
-            res = sentiment_config[c_idx]
+                pred = torch.argmax(probs).item()
+                conf = probs[pred].item()
+                res = sentiment_config[pred]
 
-            st.markdown(f"""
-                <div style="border-radius: 30px; padding: 40px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 212, 255, 0.2); border-top: 6px solid {res['color']}; margin-top: 30px;">
-                    <div style="font-size: 60px; margin-bottom: 10px;">{res['icon']}</div>
-                    <h2 style="color: {res['color']}; margin: 0; letter-spacing: 2px; font-weight: 800; font-size: 2.5rem;">{res['label']}</h2>
-                    <p style="font-size: 1.4rem; color: #ccd6f6; margin: 25px 0; font-style: italic;">"{res['msg']}"</p>
-                    <div style="background: rgba(0, 212, 255, 0.05); padding: 20px; border-radius: 15px; border-left: 5px solid {res['color']};">
-                        <span style="color: #70757a; font-family: monospace;">AI_CONFIDENCE:</span>
-                        <span style="color: white; font-family: monospace; font-weight: bold; margin-left: 10px; font-size: 1.2rem;">{conf:.4%}</span>
+                st.markdown(f"""
+                    <div style="border-radius: 30px; padding: 40px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 212, 255, 0.2); border-top: 6px solid {res['color']}; margin-top: 30px;">
+                        <div style="font-size: 60px; margin-bottom: 10px;">{res['icon']}</div>
+                        <h2 style="color: {res['color']}; margin: 0; font-weight: 800; font-size: 2.5rem;">{res['label']}</h2>
+                        <p style="font-size: 1.4rem; color: #ccd6f6; margin: 25px 0; font-style: italic;">"{res['msg']}"</p>
+                        <div style="background: rgba(0, 212, 255, 0.05); padding: 20px; border-radius: 15px; border-left: 5px solid {res['color']};">
+                            <span style="color: #70757a; font-family: monospace;">AI_CONFIDENCE:</span>
+                            <span style="color: white; font-family: monospace; font-weight: bold; margin-left: 10px; font-size: 1.2rem;">{conf:.4%}</span>
+                        </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
 # ---------- FOOTER ----------
 st.markdown(f"""
