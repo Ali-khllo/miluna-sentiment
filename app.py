@@ -194,7 +194,7 @@ with right_col:
         placeholder="Speak your mind. Nothing escapes my logic..."
     )
 
-    if st.button(f"Let {AI_NAME()} Guess ❯", use_container_width=True):
+    if st.button(f"Let {AI_NAME} Guess ❯", use_container_width=True):
         if not text.strip():
             st.warning("My sensors require data to function. Please input text.")
         else:
