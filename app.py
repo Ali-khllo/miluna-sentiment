@@ -181,7 +181,7 @@ with left_col:
 with right_col:
     st.markdown(f"""
     <div class="ai-card">
-        <h2>I am {AI_NAME} 🤖</h2>
+        <h2>I am {AI_NAME} 🌚</h2>
         <p style="font-style:italic; color:#ccd6f6; font-size:1.2rem;">
             "Transfer your consciousness into my neural core. I am ready to decode the vibrations hidden in your lines."
         </p>
@@ -225,7 +225,7 @@ with right_col:
 # ---------- FOOTER ----------
 st.markdown(f"""
 <div class="custom-footer">
-    <span class="footer-name">Built with Neural Logic by {YOUR_NAME}</span><br>
-    <span style="color:#3e4451; font-size:0.8rem;">SYSTEM STATUS: ONLINE | 2026</span>
+    <span class="footer-name">Built by {YOUR_NAME}</span><br>
+    <span style="color:#3e4451; font-size:0.8rem;">2026</span>
 </div>
 """, unsafe_allow_html=True)
